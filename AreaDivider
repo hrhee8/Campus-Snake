@@ -1,0 +1,161 @@
+package edu.illinois.cs.cs125.spring2020.mp.logic;
+
+import android.graphics.Color;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+/**
+ * class.
+ */
+public class AreaDivider {
+    /** setNorth due. */
+    private double north;
+    /** setEast due. */
+    private double east;
+    /** setWest due. */
+    private double south;
+    /** setSouth due. */
+    private double west;
+    /** setcellSize due. */
+    private int cellSize;
+    /**
+     * .
+     */
+    private LatLng northeast;
+    /**
+     * .
+     */
+    private LatLng southwest;
+
+    /**
+     * .
+     */
+    private LatLng southeast;
+    /**
+     * .
+     */
+    private LatLng northwest;
+
+    /**
+     * @param setNorth - setnorth.
+     * @param setEast - seteast.
+     * @param setSouth - setsouth.
+     * @param setWest - setwest.
+     * @param setCellSize - setcellsize.
+     */
+    public AreaDivider(final double setNorth,
+                       final double setEast,
+                       final double setSouth,
+                       final double setWest,
+                       final int setCellSize) {
+        north = setNorth;
+        east = setEast;
+        south = setSouth;
+        west = setWest;
+        cellSize = setCellSize;
+    }
+    /**
+     * @param x - x.
+     * @param y - y.
+     * @return - bounds.
+     */
+    public com.google.android.gms.maps.model.LatLngBounds getCellBounds(final int x, final int y) {
+        double xnewcelllength = (east - west) / getXCells();
+        double ynewcelllength = (north - south) / getYCells();
+        double southwestx = west + x * xnewcelllength;
+        double southwesty = south + y * ynewcelllength;
+        double northeastx = west + (x + 1) * xnewcelllength;
+        double northeasty = south + (y + 1) * ynewcelllength;
+        northeast = new LatLng(northeasty, northeastx);
+        southwest = new LatLng(southwesty, southwestx);
+        LatLngBounds bound = new LatLngBounds(southwest, northeast);
+        System.out.println(bound.northeast);
+        return bound;
+    }
+    /**
+     * @return - xcell.
+     */
+    public int getXCells() {
+        double xlength = LatLngUtils.distance(north, east, north, west);
+        if (xlength >= 0) {
+            int xcell =  (int) Math.ceil(xlength / cellSize);
+            return xcell;
+        }
+        return -1;
+    }
+
+    /**
+     * @param location -loc.
+     * @return - xloc.
+     */
+    public int getXIndex(final com.google.android.gms.maps.model.LatLng location) {
+        double xnewcelllength = LatLngUtils.distance(north, east, north, west) / getXCells();
+        double xlength = LatLngUtils.distance(south, west, south, location.longitude);
+        int xlocation = (int) Math.floor(xlength / xnewcelllength);
+        return xlocation;
+    }
+
+    /**
+     * @return - ycell.
+     */
+    public int getYCells() {
+        double ylength = LatLngUtils.distance(north, west, south, west);
+        if (ylength >= 0) {
+            int ycell =  (int) Math.ceil(ylength / cellSize);
+            return ycell;
+        }
+        return -1;
+    }
+
+    /**
+     * @param location -loc.
+     * @return - yloc.
+     */
+    public int getYIndex(final com.google.android.gms.maps.model.LatLng location) {
+        double ynewcelllength = LatLngUtils.distance(north, west, south, west) / getYCells();
+        double ylength = LatLngUtils.distance(south, west, location.latitude, west);
+        int ylocation = (int) Math.floor(ylength / ynewcelllength);
+        return ylocation;
+    }
+
+
+    /**
+     * @return - bool.
+     */
+    public boolean isValid() {
+        if (((east - west) > 0) && ((north - south) > 0)) {
+            if (cellSize > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param map -map.
+     */
+    public void renderGrid(final com.google.android.gms.maps.GoogleMap map) {
+        double xnewcelllength = (east - west) / getXCells();
+        double ynewcelllength = (north - south) / getYCells();
+        for (int i = 0; i <= getXCells(); i++) {
+            LatLng start = new LatLng(south, west + i * xnewcelllength);
+            LatLng end = new LatLng(north, west + i * xnewcelllength);
+            final int lineThickness = 12;
+            PolylineOptions fill = new PolylineOptions().add(start, end)
+                    .color(Color.BLACK).width(lineThickness).zIndex(1);
+            map.addPolyline(fill);
+        }
+        for (int j = 0; j <= getYCells(); j++) {
+            LatLng start = new LatLng(south + j * ynewcelllength, west);
+            LatLng end = new LatLng(south + j * ynewcelllength, east);
+            final int lineThickness = 12;
+            PolylineOptions fill = new PolylineOptions().add(start, end)
+                    .color(Color.BLACK).width(lineThickness).zIndex(1);
+            map.addPolyline(fill);
+        }
+        return;
+    }
+}
+
